@@ -158,4 +158,24 @@ yargs.command({
 
     }
 })
+yargs.command({
+    command: 'listnotes',
+    describe: 'remove a new note',
+    builder:{
+        title:{
+            describe:'note title',
+            demandOption:true,
+            type:'string'
+
+
+        }
+    },
+    
+    handler:function(argv) {
+        Notes.removeNotes(argv.title)
+     
+   
+
+    }
+})
 yargs.parse()

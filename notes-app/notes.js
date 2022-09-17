@@ -3,6 +3,9 @@ const chalk=require('chalk')
 const getNotes= function(){
     return 'your notes'
 }
+const listNotes=()=>{
+    
+}
 const removeNotes=function(title){
     const notes=loadNotes()
     const notesToKeep=notes.filter(function(note){
@@ -62,4 +65,5 @@ const loadNotes=function(){
 }
 module.exports={getNotes:getNotes,
                 addNotes:addNotes,
-            removeNotes:removeNotes}
+            removeNotes:removeNotes,
+        listNotes:listNotes}
