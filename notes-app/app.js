@@ -112,7 +112,8 @@ yargs.parse()*/
 ///////////////////////////////////////////////////////////////////////
 const Notes=require('./notes.js')
 const yargs=require('yargs')
-
+const notes = require('./notes.js')
+//comand to add
 yargs.command({
     command: 'add',
     describe: 'Add a new note',
@@ -138,6 +139,7 @@ yargs.command({
 
     }
 })
+//command to remove
 yargs.command({
     command: 'remove',
     describe: 'remove a new note',
@@ -158,9 +160,18 @@ yargs.command({
 
     }
 })
+//command to list
 yargs.command({
     command: 'listnotes',
-    describe: 'remove a new note',
+    describe: 'list all notes',
+    handler:function() {
+        Notes.listNotes()
+    }
+})
+//command to read
+yargs.command({
+    command: 'read',
+    describe: 'read a new note',
     builder:{
         title:{
             describe:'note title',
@@ -172,8 +183,7 @@ yargs.command({
     },
     
     handler:function(argv) {
-        Notes.removeNotes(argv.title)
-     
+     notes.readNotes(argv.title)
    
 
     }
