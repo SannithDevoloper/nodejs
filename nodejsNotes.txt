@@ -576,6 +576,392 @@ req({url:url},(error,response)=>
                                {const data=JSON.parse(response.body)
                                    console.log(data)
                                  })
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+Customize http request==>
+
+const req=require('request')
+const url='http://api.weatherstack.com/current?access_key=6a4269392d394a7edff489df394a6bd0&query=New%20York'
+req({url:url,json:true},(error,response)=>
+                               {
+                                   console.log(response.data)
+                                 })
+///2nd example
+const req=require('request')
+const url='https://zomatoajulypi.herokuapp.com/location'
+req({url:url,json:true},(error,response)=>
+                               {const data=response.body
+                                   console.log('hi this restaurent is located at'+data[0].location_name+'and state that belongs to'+data[0].state)
+                                 })
+output:=>
+hi this restaurent is located atAshok Vihar Phase 3, New Delhiand state that belongs toDelhi
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+Handling Errors==>
+
+const req=require('request')
+const url='http://api.weatherstack.com/current?access_key=6a4269392d394a7edff489df394a6bd0&query=New%20York'
+req({url:url,json:true},(error,response)=>
+                               {
+                                   if(error)
+                                        {
+                                          console.log('unable to connect to url')
+                                          } 
+                                else if(response.body.error)
+                                        {
+                                         console.log('unable to find location please check input arguments')
+                                           }
+                                   else{
+                                   console.log(response.data)
+                                    }
+                                 })
+
+//y example 2: geocode:=>
+ 
+const req=require('request')
+const url='geocodeurl of mapbox'
+req({url:url,json:true},(error,response)=>
+                               {
+                                   if(error)
+                                        {
+                                          console.log('unable to connect to url')
+                                          } 
+                                else if(response.body.features.length===0)
+                                        {
+                                         console.log('unable to find location please check input arguments')
+                                           }
+                                   else{
+                                   const longitude=(response.body.features[0].center[0])
+                                    const latitude=(response.body.features[0].center[1])
+                                    console.log (longitude,latitude)
+                                    }
+                                 })
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+call back function:==>
+
+const greet=(address,callback)=>{
+
+        const data={lat:1231,lng:5454}
+        return data 
+    
+}
+const data=greet('goodmorning')
+console.log(data)
+
+output:=>
+{ lat: 1231, lng: 5454 }  //// but this synchronus method
+
+//y
+const greet=(address,callback)=>{
+    setTimeout(()=>{
+        const data={lat:1231,lng:5454}
+        return data 
+    },2000)
+}
+const data=greet('goodmorning')
+console.log(data)
+
+output:=>
+undefiened
+
+///to over come this call back functions comes into pitcure
+
+const greet=(address,callback)=>{
+    setTimeout(()=>{
+        const data={lat:1231,lng:5454}
+        callback(data) 
+    },2000)
+}
+greet('goodmorning',(output)=>{console.log('output') })
+output:=>
+{lat:1231,lng:5454}
+
+
+const add=(a,b,callback)=>{
+    setTimeout(()=>callback(a+b),5000)
+}
+add(45,46,(add)=>console.log(add))
+output:=>
+91
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+call back absrtraction:=>>
+
+create utils folder and init creae geocode.js file:=>
+
+const request=require('request')
+const geocode = (address, callback) => {
+    const url = 'https://api.mapbox.com/geocoding/v5/mapbox.places/' + address + '.json?access_token=pk.eyJ1IjoiYW5kcmV3bWVhZDEiLCJhIjoiY2pvOG8ybW90MDFhazNxcnJ4OTYydzJlOSJ9.njY7HvaalLEVhEOIghPTlw&limit=1'
+
+    request({ url, json: true }, (error, { body }) => {
+        if (error) {
+            callback('Unable to connect to location services!', undefined)
+        } else if (body.features.length === 0) {
+            callback('Unable to find location. Try another search.', undefined)
+        } else {
+            callback(undefined, {
+                latitude: body.features[0].center[1],
+                longitude: body.features[0].center[0],
+                location: body.features[0].place_name
+            })
+        }
+    })
+}
+module.exports = geocode
+
+
+//in app.js:=>
+
+const geocode = require('./utils/geocode')
+geocode('New York',(error,data)=>{
+console.log('ERROR  is',error)
+console.log('DATA is',data)
+})
+
+output:==>
+ERROR is  undefined
+DATA is {
+latitude:5564654,
+longitude:46545,
+location:'New york, 	United States'}
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+call back abstraction challange with forecast as similar to geocode
+
+in util in forecast.js=>
+
+const request = require('request')
+
+const forecast = (latitude, longitude, callback) => {
+    const url = 'https://api.darksky.net/forecast/9d1465c6f3bb7a6c71944bdd8548d026/' + latitude + ',' + longitude
+
+    request({ url, json: true }, (error, { body }) => {
+        if (error) {
+            callback('Unable to connect to weather service!', undefined)
+        } else if (body.error) {
+            callback('Unable to find location', undefined)
+        } else {
+            callback(undefined, body.daily.data[0].summary + ' It is currently ' + body.currently.temperature + ' degress out. There is a ' + body.currently.precipProbability + '% chance of rain.')
+        }
+    })
+}
+
+module.exports = forecast
+
+inapp.js:=>
+
+geocode('New York', (error,data) => {
+    if (error) {
+        return console.log(error)
+    }
+
+    forecast(latitude, longitude, (error, forecastData) => {
+        if (error) {
+            return console.log(error)
+        }
+
+        console.log(location)
+        console.log(forecastData)
+    })
+})
+
+output:=>
+
+New York
+Partly cloudy It is currently  39.67 degress out. There is a 0 % chance of rain
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+Accesing command line arg with yargs==>
+
+const geocode = require('./utils/geocode')
+const forecast = require('./utils/forecast')
+
+const address = process.argv[2]
+
+if (!address) {
+    console.log('Please provide an address')
+} else {
+    geocode(address, (error, { latitude, longitude, location }) => {
+        if (error) {
+            return console.log(error)
+        }
+
+        forecast(latitude, longitude, (error, forecastData) => {
+            if (error) {
+                return console.log(error)
+            }
+
+            console.log(location)
+            console.log(forecastData)
+        })
+    })
+}
+
+
+OUTPUT:=>
+in console
+node app.js  "New york"
+New York
+Partly cloudy It is currently  39.67 degress out. There is a 0 % chance of rains
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+Short Hand And Destructuring==>
+
+const name='sannith'
+const age=24
+const user={
+    name:name,
+    age:age,
+    location:'hyderabad'
+}
+console.log('user data is ',user)
+
+output:=>
+user data is  { name: 'sannith', age: 24, location: 'hyderabad' }
+
+const name='sannith'
+const age=24
+const user={
+    name,
+    age,
+    location:'hyderabad'
+}
+console.log('user data is ',user)
+
+output:=> //same output
+user data is  { name: 'sannith', age: 24, location: 'hyderabad' }
+
+//object destructuring=>
+
+const movie={
+    hero:'prabhas',
+    heroine:'anushks',
+    director:'rajamouli',
+    budget:100000000
+
+}
+const hero=movie.hero  ////destructure object
+console.log(hero)
+console.log('hero name is',movie.hero)
+
+
+//ly
+const {hero,heroine,director,budget}= movie
+console.log('hero name is',hero)
+
+const {hero:heroname,heroine,director,budget}= movie
+console.log('hero name is',heroname)
+
+const {hero:heroname,heroine,director,budget=500000000}= movie //updated
+console.log('movie budget is',budget)
+
+
+const movie={
+    hero:'prabhas',
+    heroine:'anushks',
+    director:'rajamouli',
+    budget:100000000
+
+}
+
+
+const transaction=(type,{hero,director,budget})=>{
+    console.log(type,hero,director,budget)
+}
+transaction('industry',movie)
+output:=>
+industry prabhas rajamouli 100000000s
+///////////////////////////////////////////////////////////////////////////////////////////////////
+destructuring complete weather app:==>
+
+in app.js:=>
+
+const geocode = require('./utils/geocode')
+const forecast = require('./utils/forecast')
+
+const address = process.argv[2]
+
+if (!address) {
+    console.log('Please provide an address')
+} else {
+    geocode(address, (error, { latitude, longitude, location }) => {
+        if (error) {
+            return console.log(error)
+        }
+
+        forecast(latitude, longitude, (error, forecastData) => {
+            if (error) {
+                return console.log(error)
+            }
+
+            console.log(location)
+            console.log(forecastData)
+        })
+    })
+}
+
+in forecast.js=>
+
+const request = require('request')
+
+const forecast = (latitude, longitude, callback) => {
+    const url = 'https://api.darksky.net/forecast/9d1465c6f3bb7a6c71944bdd8548d026/' + latitude + ',' + longitude
+
+    request({ url, json: true }, (error, { body }) => {
+        if (error) {
+            callback('Unable to connect to weather service!', undefined)
+        } else if (body.error) {
+            callback('Unable to find location', undefined)
+        } else {
+            callback(undefined, body.daily.data[0].summary + ' It is currently ' + body.currently.temperature + ' degress out. There is a ' + body.currently.precipProbability + '% chance of rain.')
+        }
+    })
+}
+
+module.exports = forecast
+
+in geocode.js:=>>
+
+const request = require('request')
+
+const geocode = (address, callback) => {
+    const url = 'https://api.mapbox.com/geocoding/v5/mapbox.places/' + address + '.json?access_token=pk.eyJ1IjoiYW5kcmV3bWVhZDEiLCJhIjoiY2pvOG8ybW90MDFhazNxcnJ4OTYydzJlOSJ9.njY7HvaalLEVhEOIghPTlw&limit=1'
+
+    request({ url, json: true }, (error, { body }) => {
+        if (error) {
+            callback('Unable to connect to location services!', undefined)
+        } else if (body.features.length === 0) {
+            callback('Unable to find location. Try another search.', undefined)
+        } else {
+            callback(undefined, {
+                latitude: body.features[0].center[1],
+                longitude: body.features[0].center[0],
+                location: body.features[0].place_name
+            })
+        }
+    })
+}
+
+module.exports = geocodes
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
