@@ -1,0 +1,1 @@
+console.log('script running in client side')
