@@ -940,7 +940,7 @@ const geocode = (address, callback) => {
 module.exports = geocodes
 /////////////////////////////////////////////////////////////////////////////////////////////
 
-Express (npm package moduleto create web server)===>
+Express (npm package module to create web server)===>
 
 const express=require('express')
 const app=express()
@@ -1021,6 +1021,434 @@ in about.html:=>
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Dynamic Pages with templating==>
+
+handlebars package
+ npm  i hbs
+
+crate seperate folder views in that add files index.hbs,about.hbs and copy all that from public to views
+in index.hbs:=>
+
+<html>
+    <head>
+        
+    </head>
+    <body>
+        <h1>{{title}}</h1>
+<p>created by {{name}}<P>
+    </body>
+</html>
+
+
+
+in app.js:=>
+app.set('view engine','hbs')
+app.get(' ',(req,res)=>
+                      {res.render('index',{
+                                                       title:'weather app',
+                                                        name:'sannith'})
+                                                           })
+
+//y in about.hbs:=>
+
+<html>
+    <head>
+        
+    </head>
+    <body>
+        <h1>{{title}}</h1>
+<img src=' '  />
+<p>created by {{name}}<P>
+    </body>
+</html>
+
+in app.js:=>
+app.set('view engine','hbs')
+app.get('/about ',(req,res)=>
+                      {res.render('about',{
+                                                       title:'About me',
+                                                        name:'sannith'})
+                                                           })
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+customizing views directory:===>
+
+rename views folder to templates
+
+it throws error while running
+
+to over come this
+
+const viewsPath=path.join(__dirname,'../templates')
+app.set('views',viewsPath)
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Advance Templating:==>
+
+in app.js:=>
+const hbs=require('hbs')
+
+in templates folder add two folders views and partial
+in views coppy all .hbs file 
+
+const viewsPath=path.join(__dirname,'../templates/views')
+app.set('views',viewsPath)
+
+const partialPath=path.join(__dirname,'../templates/partial')
+hbs.registerPartilas(partialPath)
+
+in partial folder add header.hbs
+in that
+<h1>static header .hbs text<h1>
+
+in help.hbs
+
+<html>
+    <head>
+        
+    </head>
+    <body>
+    {{>header}}
+        <h1>{{helptext}}</h1>
+<p>created by {{name}}<P>
+    </body>
+</html>
+
+in app.js:=>
+
+app.get(' /help',(req,res)=>
+                      {res.render('help',{
+                                                       helptext:'this is text to help',
+                                                        name:'sannith'})
+                                                           })
+
+
+//add  {{>header}}to all .hbs files
+
+in header.hbs:=>
+
+<h1>{{title}}<h1>
+<div>
+<a href='/'>weather</a>
+<a href='/about'>about</a>
+<a href='/help'>help</a>
+</div>
+
+
+//creating partilas for footer
+
+in partial folder create footer.hbs
+in that 
+<p> this app is devoloped by {{name}}
+
+////add  {{>footer}}to all .hbs files
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+404 pages==>
+
+localhost:3000/sannith
+cannot GET /sannith
+
+IN app.js:=>
+
+app.get('*',(req,res)=>{
+                                       res.send('this is your 404 page')})
+localhost:3000/sannith
+this is your 404 page
+
+app.get('/help/*',(req,res)=>{
+                                       res.send('help text is not found')})
+
+localhost:3000/help/text
+help text is not found
+
+
+in views create 404.hbs
+in that
+
+<html>
+    <head>
+        
+    </head>
+    <body>
+    {{>header}}
+<p>{{errormessage}}<p>
+{{>footer}}
+ 
+    </body>
+</html>
+
+in app.js:=>
+
+app.get('*',(req,res)=>{
+                                       res.render('404',{
+                                                                    title:'404',
+                                                                    name:'sannith',
+                                                                    errormessage:'page not found'})
+                                          })
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Accesing APIS from Browser==>
+
+Query String:=>
+
+app.get('/products',(req,res)=>{
+                                                     res.send({products:[]})
+                                                      })
+
+localhost:300/products
+{
+"products":[]
+}
+
+localhost:300/products?search=watches&rating=5
+
+app.get('/products',(req,res)=>{
+                                                    console.log(req.query.search)
+                                                     res.send({products:[]})
+                                                      })
+
+
+localhost:300/products?search=watches&rating=5
+{
+"products":[]
+}
+in console
+watches
+
+app.get('/products',(req,res)=>{
+if(!req.query.search){
+ return res.send(
+{error:'please provide search term'})
+}
+ console.log(req.query.search)
+ res.send({products:[]})
+ })
+
+localhost:300/products
+{
+"error":"please provide search term"
+}
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+app.get('/wether',(req,res)=>{res.send({forecast:'it is hot',location:'india'})})
+
+localhost:3000/weather
+{
+"forcast":"it is hot",
+"location":"india"
+}
+
+localhost:3000/weather?address=us
+
+app.get('/wether',(req,res)=>
+{
+if(!req.query.address){
+return res.send({error:'please provide address'})}
+res.send({forecast:'it is hot',
+                 location:'india',
+                 adsress:req.query.address
+                })
+})
+
+localhost:3000/weather?address=us
+{
+"forecast":"it is hot",
+"location":"india",
+ "address":"us"
+
+}
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Building Json Http end  point:==>>>>
+
+copy utils folder from weather-app to web-server
+
+npm i request in web-server
+
+
+app.get('/weather', (req, res) => {
+    if (!req.query.address) {
+        return res.send({
+            error: 'You must provide an address!'
+        })
+    }
+
+    geocode(req.query.address, (error, { latitude, longitude, location } ) => {
+        if (error) {
+            return res.send({ error })
+        }
+
+        forecast(latitude, longitude, (error, forecastData) => {
+            if (error) {
+                return res.send({ error })
+            }
+
+            res.send({
+                forecast: forecastData,
+                location,
+                address: req.query.address
+            })
+        })
+    })
+})
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Default function parameter:===>
+
+const greet=(name)=>{
+console.log('hello', name)
+}
+
+greet('sannith')
+output:= hello sannith
+
+const greet=(name)=>{
+console.log('hello', name)
+}
+greet()
+hello undefined
+
+const greet=(name='user')=>{
+console.log('hello', name)
+}
+greet()
+hello user
+
+//destructred object cant be undefined it throws error
+const laptop={
+brand:'dell',
+color:'silver',
+ram:'8gb'}
+const {brand,color,ram}=laptop
+console.log(brand)
+output:=
+dell
+
+const transaction=(type,{brand})=>{s
+console.log(type ,brand)
+}
+transaction('order',laptop)
+output:=>
+order dell
+
+transaction('order')
+//it throws error because is is destructured object
+
+to over come this
+
+const transaction=(type,{brand}={})=>{
+console.log(type ,brand)
+}
+transaction('order')
+output:=>
+order  undefined
+
+
+localhost:3000/weather?address=!
+output :=>
+in console crashed
+type of error:cannot desturcture property 'lattitude' of  'undefined' 
+to overcomec this
+
+ geocode(req.query.address, (error, { latitude, longitude, location } ={}) 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Creating Search Form====>
+
+in public folder in js app.js:=>
+
+const weatherForm = document.querySelector('form')
+const search = document.querySelector('input')
+const messageOne = document.querySelector('#message-1')
+const messageTwo = document.querySelector('#message-2')
+
+weatherForm.addEventListener('submit', (e) => {
+    e.preventDefault()
+
+    const location = search.value
+
+    messageOne.textContent = 'Loading...'
+    messageTwo.textContent = ''
+
+    fetch('/weather?address=' + location).then((response) => {
+        response.json().then((data) => {
+            if (data.error) {
+                messageOne.textContent = data.error
+            } else {
+                messageOne.textContent = data.location
+                messageTwo.textContent = data.forecast
+            }
+        })
+    })
+})
+
+in index.hbs:=>
+
+<!DOCTYPE html>
+
+<html>
+
+<head>
+    <title>Weather</title>
+    <link rel="icon" href="/img/weather.png">
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+
+<body>
+    <div class="main-content">
+        {{>header}}
+
+        <p>Use this site to get your weather!</p>
+
+        <form>
+            <input placeholder="Location">
+            <button>Search</button>
+        </form>
+
+        <p id="message-1"></p>
+        <p id="message-2"></p>
+    </div>
+
+    {{>footer}}
+
+    <script src="/js/app.js"></script>
+</body>
+
+</html>
+////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
