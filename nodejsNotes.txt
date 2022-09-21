@@ -1417,7 +1417,120 @@ in index.hbs:=>
 </body>
 
 </html>
-////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+MongoDB===>
+
+download mongo db community server
+
+/users/sanni/mongodb/bin/mongod.exe  --dbpath=/users/sanni/mongodb-data
+
+installing database gui viewer(studio 3t) this connects with mongodb
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+perform crud operations:=>
+
+create:=>
+
+insert one:=
+
+const mongodb=require('mongodb')
+const MongoClient=mongodb.MongoClient
+const connectionURL='mongodb://127.0.0.1:27017'
+const databaseName='task-manager'
+MongoClient.connect(connectionURL,{useNewUrlParser:true},(error,client)=>{
+    if(error)
+    {
+        console.log('unable to connect to database')
+    }
+const db=client.db(databaseName)
+    db.collection('users').insertOne({
+        name:'krish',age:20},
+    (error,result)=>{
+            if(error){
+                  console.log('unable to insert into db')
+                     }
+console.log(result.ops)})
+
+
+insert Many:=
+
+const mongodb=require('mongodb')
+const MongoClient=mongodb.MongoClient
+const connectionURL='mongodb://127.0.0.1:27017'
+const databaseName='task-manager'
+MongoClient.connect(connectionURL,{useNewUrlParser:true},(error,client)=>{
+    if(error)
+    {
+        console.log('unable to connect to database')
+    }
+const db=client.db(databaseName)
+    db.collection('tasks').insertMany([{
+        description:'complete react',completed:true},{description:'complete node',completed:false},{
+            description:'get job',completed:false
+        }],
+    (error,database)=>{
+            if(error){
+                  console.log('unable to insert into db')
+                     }
+                     else{
+console.log('result is',database.ops)
+}})
+    
+
+})
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+Read operatio:==>
+
+findone:=>
+const mongodb=require('mongodb')
+const MongoClient=mongodb.MongoClient
+const connectionURL='mongodb://127.0.0.1:27017'
+const databaseName='task-manager'
+MongoClient.connect(connectionURL,{useNewUrlParser:true},(error,client)=>{
+    if(error)
+    {
+        console.log('unable to connect to database')
+    }
+const db=client.db(databaseName)
+    db.collection('tasks').findOne({_id: new ObjectId("454674545545444")},
+    (error,tasks)=>{
+            if(error){
+                  console.log('unable to fetch')
+                     }
+                    
+            console.log(tasks)
+})
+  }  )
+
+
+
+findMany:=>
+
+const mongodb=require('mongodb')
+const MongoClient=mongodb.MongoClient
+const connectionURL='mongodb://127.0.0.1:27017'
+const databaseName='task-manager'
+MongoClient.connect(connectionURL,{useNewUrlParser:true},(error,client)=>{
+    if(error)
+    {
+        console.log('unable to connect to database')
+    }
+const db=client.db(databaseName)
+    db.collection('tasks').find({description:'complete node'}).toArray(
+    (error,tasks)=>{
+            if(error){
+                  console.log('unable to fetch')
+                     }
+                    
+            console.log(tasks)
+})
+  }  )
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 
 
