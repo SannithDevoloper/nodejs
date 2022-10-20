@@ -1,11 +1,13 @@
+const auth= require('../middleware/auth')
 const express=require('express')
 const User=require('../models/usermodel')
 const router=new express.Router()
 router.post('/users',async(req,res)=>{
     const user= new User(req.body)
     try{
-        const users= await user.save()
-        res.send(users)
+       await user.save()
+        const token= user.generateAuthToken()
+        res.send({ user, token})
 
     }catch(e){
         res.status(400)
@@ -13,16 +15,17 @@ router.post('/users',async(req,res)=>{
 
     }
 })
-router.get('/users',async(req,res)=>{
-    try{
-        const user = await User.find({})
-        res.send(user)
+router.get('/users/me',auth,async(req,res)=>{
+    // try{
+    //     const user = await User.find({})
+    //     res.send(user)
 
-    }
-    catch(e){
-        res.sendStatus(400)
-    res.send(e)
-    }
+    // }
+    // catch(e){
+    //     res.sendStatus(400)
+    // res.send(e)
+    // }
+    res.send(req.user)
    })
    router.get('/users/:id',async(req,res)=>{
     const _id=req.params.id
@@ -84,7 +87,8 @@ router.delete('/users/:id',async(req,res)=>{
 router.post('/users/login', async (req, res) => {
     try {
         const user = await User.findByCredentials(req.body.email, req.body.password)
-        res.send( user)
+        const token= await user.generateAuthToken()
+        res.send( {user,token})
     } catch (e) {
         res.status(400).send('some thing went wrong please enter valid email or password')
     }

@@ -2516,6 +2516,208 @@ userSchema.statics.findByCredentials = async (email, password) => {
 
 Json web-token:====>
 
+in index.js
+
+const jwt= require('jsonwebtoken')
+const myfunction=async()=>{
+    const token=jwt.sign({_id:'12346'},'this is my new course',{expiresIn:'7 days'})
+    console.log(token)
+    const data=jwt.verify(token,'this is my new course')
+    console.log(data)
+}
+myfunction()
+
+output:
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiIxMjM0NiIsImlhdCI6MTY2NTk5NjYyNywiZXhwIjoxNjY2NjAxNDI3fQ.lE48k8eXLiczWk3j6UyJgCVp6i3y0ZkErMfOJNG9jbg       
+{ _id: '12346', iat: 1665996627, exp: 1666601427 }
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+generating authentication token:==>
+
+
+in usermodel
+
+userSchema.methods.generateAuthToken= async function (){
+   const user=this
+   const token=jwt.sign({_id:user._id.toString()},'this is my new course')
+   return token
+
+}
+
+in router user.js
+
+router.post('/users/login', async (req, res) => {
+    try {
+        const user = await User.findByCredentials(req.body.email, req.body.password)
+        const token= await user.generateAuthToken()
+        res.send( {user,token})
+    } catch (e) {
+        res.status(400).send('some thing went wrong please enter valid email or password')
+    }
+})
+
+output in post man new token generated while login:
+
+{
+    "user": {
+        "_id": "6332f243e20c652479e22438",
+        "name": "sannith",
+        "email": "sannithpeddolla143@gmail.com",
+        "password": "$2a$08$0PAUy612jFyQ/t9mgLwP5ehsY8bsorBIIz/6dWFlTPSKhzyGuZqTq",
+        "age": 24,
+        "__v": 0
+    },
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2MzMyZjI0M2UyMGM2NTI0NzllMjI0MzgiLCJpYXQiOjE2NjYxNjAwMDR9.ZBm2aJguhOYerk2w4Z1MevhJeExiL-BeJznYhxuJQs8"
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+to add tokens to database:=>
+inside user model
+
+add
+
+ tokens:[{
+      token:{
+         type: String,
+         required:true
+      }
+   }]
+
+userSchema.methods.generateAuthToken= async function (){
+   const user=this
+   const token=jwt.sign({_id:user._id.toString()},'this is my new course')
+   user.tokens= user.tokens.concat({token})
+  user.save( )
+   return token
+
+}
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+generating token for creating user(signup)
+
+inside router user.js
+
+router.post('/users',async(req,res)=>{
+    const user= new User(req.body)
+    try{
+       await user.save()
+        const token= user.generateAuthToken()
+        res.send({ user, token})
+
+    }catch(e){
+        res.status(400)
+        res.send(e)
+
+    }
+})
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+Express Middleware:=>
+
+without middleware: new request  -> run route handler
+with middleware: newc request -> do something -> run route handler
+
+inside index.js:
+
+app.use((req,res,next)=>{ 
+console.log(req.method,req.path)
+next()} )
+
+app.use((req,res,next)=>{ 
+    if(req.method === 'GET'){
+        res.send('get req were disaled')
+    }
+    else{
+        next()
+    }
+} )
+
+app.use((req,res,next)=>{ 
+
+        res.status(503).send('site is under maintaince please check later')
+    
+} )
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Accepting Authentication Tokens:==>
+
+ create seperate folder middleware
+inside it create auth.js
+
+in auth.js:
+
+const auth= async(req,res,next)=>{
+    console.log('auth middleware called')
+    next()
+}
+module.exports= auth
+
+inside router user.js
+
+const auth=require('../middleware/auth')
+
+router.get('/users',auth,async(req,res)=>{
+    try{
+        const user = await User.find({})
+        res.send(user)
+
+    }
+    catch(e){
+        res.sendStatus(400)
+    res.send(e)
+    }
+   })
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+to authenticate get users
+
+in auth:
+
+const jwt=require('jsonwebtoken')
+const user= require('../models/usermodel')
+const auth= async(req,res,next)=>{
+    try{
+        const token=req.header('Authorization').replace('Bearer ','')
+        const decoded=jwt.verify(token,'this is my new course')
+        await user.findOne({_id:decoded._id,'tokens.token':token})
+        if(!user)
+        {
+            throw new Error()
+        }
+        req.user= user
+        next()
+
+    }
+    catch (e){
+        res.status(401).send({error:'please authenticate'})
+        
+        
+    }
+    // console.log('auth middleware called')
+    // next()
+}
+module.exports= auth
+
+
+in router 
+
+router.get('/users/me',auth,async(req,res)=>{
+    // try{
+    //     const user = await User.find({})
+    //     res.send(user)
+
+    // }
+    // catch(e){
+    //     res.sendStatus(400)
+    // res.send(e)
+    // }
+    res.send(req.user)
+   })
+
+renamed get users to get profile
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+
 
 
 
